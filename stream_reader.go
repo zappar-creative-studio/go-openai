@@ -23,7 +23,7 @@ type streamReader[T streamable] struct {
 	emptyMessagesLimit uint
 	isFinished         bool
 
-	reader         *bufio.Reader
+	Reader         *bufio.Reader
 	response       *http.Response
 	errAccumulator utils.ErrorAccumulator
 	unmarshaler    utils.Unmarshaler
