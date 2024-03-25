@@ -76,6 +76,7 @@ type RunRequest struct {
 	Model                  string         `json:"model,omitempty"`
 	Instructions           string         `json:"instructions,omitempty"`
 	AdditionalInstructions string         `json:"additional_instructions,omitempty"`
+	Stream 								 bool 					`json:stream,omitempty`
 	Tools                  []Tool         `json:"tools,omitempty"`
 	Metadata               map[string]any `json:"metadata,omitempty"`
 }
@@ -189,6 +190,51 @@ func (c *Client) CreateRun(
 	}
 
 	err = c.sendRequest(req, &response)
+	return
+}
+
+type RunStreamResponseDelta struct {
+	Role    string           `json:"role"`
+	Content []MessageContent `json:"content"`
+	FileIDs []string         `json:"file_ids"`
+}
+
+type RunStreamResponse struct {
+	ID     string                 `json:"id"`
+	Object string                 `json:"object"`
+	Delta  RunStreamResponseDelta `json:"delta"`
+}
+
+type RunStream struct {
+	*streamReader[RunStreamResponse]
+}
+
+// CreateRunStream creates a new run with streaming support.
+func (c *Client) CreateRunStream(
+	ctx context.Context,
+	threadID string,
+	request RunRequest,
+) (stream *RunStream, err error) {
+	urlSuffix := fmt.Sprintf("/threads/%s/runs", threadID)
+	request.Stream = true
+	req, err := c.newRequest(
+		ctx,
+		http.MethodPost,
+		c.fullURL(urlSuffix),
+		withBody(request),
+		withBetaAssistantV1(),
+	)
+	if err != nil {
+		return
+	}
+
+	resp, err := sendRequestStream[RunStreamResponse](c, req)
+	if err != nil {
+		return
+	}
+	stream = &RunStream{
+		streamReader: resp,
+	}
 	return
 }
 
