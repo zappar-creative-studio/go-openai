@@ -162,7 +162,7 @@ func sendRequestStream[T streamable](client *Client, req *http.Request) (*stream
 	}
 	return &streamReader[T]{
 		emptyMessagesLimit: client.config.EmptyMessagesLimit,
-		reader:             bufio.NewReader(resp.Body),
+		Reader:             bufio.NewReader(resp.Body),
 		response:           resp,
 		errAccumulator:     utils.NewErrorAccumulator(),
 		unmarshaler:        &utils.JSONUnmarshaler{},
